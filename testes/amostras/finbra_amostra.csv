@@ -1,0 +1,10 @@
+Exercício: 2020
+Escopo: Capitais
+Tabela: Despesas por Função (Anexo I-E)
+Instituição;Cod.IBGE;UF;População;Coluna;Conta;Identificador da Conta;Valor
+Prefeitura Municipal de Rio Branco - AC;1200401;AC;407319;"Despesas Empenhadas";"Despesas Exceto Intraorçamentárias";"siconfi-cor_TotalDespesas";874885274,98
+Prefeitura Municipal de Rio Branco - AC;1200401;AC;407319;"Despesas Empenhadas";"01 - Legislativa";"siconfi-cor_TotalDespesas";29014059,54
+Prefeitura Municipal de Rio Branco - AC;1200401;AC;407319;"Despesas Empenhadas";"01.031 - Ação Legislativa";"siconfi-cor_TotalDespesas";29014059,54
+Prefeitura Municipal de Rio Branco - AC;1200401;AC;407319;"Despesas Pagas";"Despesas Exceto Intraorçamentárias";"siconfi-cor_TotalDespesas";839565848,79
+Prefeitura Municipal de Porto Velho - RO;1100205;RO;529544;"Despesas Empenhadas";"FU01 - Demais Subfunções";"siconfi-cor_TotalDespesas";911331,37
+Prefeitura Municipal de Salvador - BA;2927408;BA;2872347;"Inscrição de Restos a Pagar Não Processados";"01.031 - Ação Legislativa";"siconfi-cor_TotalDespesas";-607166,09
