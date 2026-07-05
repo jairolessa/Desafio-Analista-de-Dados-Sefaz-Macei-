@@ -8,6 +8,8 @@ from src.consolidar import (
     classificar_conta,
     ler_finbra_csv,
     consolidar_anos,
+    salvar_parquet,
+    consultar_duckdb,
 )
 
 CAMINHO_AMOSTRA = Path(__file__).parent / "amostras" / "finbra_amostra.csv"
@@ -91,7 +93,6 @@ class TestLerFinbraCsv:
         assert df["Instituição"].str.contains("Rio Branco").any()
 
     def test_remove_aspas_duplas_dos_campos(self):
-       
         df = ler_finbra_csv(CAMINHO_AMOSTRA, ano=2020)
 
         assert not df["Coluna"].str.contains('"').any()
@@ -149,6 +150,7 @@ class TestLerFinbraCsv:
 
     def test_quantidade_de_linhas_bate_com_amostra(self):
         df = ler_finbra_csv(CAMINHO_AMOSTRA, ano=2020)
+
         assert len(df) == 6
 
 
@@ -178,3 +180,81 @@ class TestConsolidarAnos:
         df = consolidar_anos(diretorio_extraido)
 
         assert df.empty
+
+
+class TestSalvarParquet:
+    def test_salva_e_le_de_volta_com_mesmo_conteudo(self, tmp_path):
+        df = pd.DataFrame({"a": [1, 2], "b": ["x", "y"]})
+        caminho = tmp_path / "saida.parquet"
+
+        resultado = salvar_parquet(df, caminho)
+
+        assert caminho.exists()
+        assert resultado == caminho
+        df_lido = pd.read_parquet(caminho)
+        pd.testing.assert_frame_equal(df, df_lido)
+
+    def test_cria_diretorio_pai_se_nao_existir(self, tmp_path):
+        df = pd.DataFrame({"a": [1]})
+        caminho = tmp_path / "subpasta_nova" / "saida.parquet"
+
+        salvar_parquet(df, caminho)
+
+        assert caminho.exists()
+
+    def test_preserva_acentos_no_parquet(self, tmp_path):
+        
+        df = pd.DataFrame({"instituicao": ["Prefeitura de Maceió - AL"]})
+        caminho = tmp_path / "saida.parquet"
+
+        salvar_parquet(df, caminho)
+        df_lido = pd.read_parquet(caminho)
+
+        assert df_lido.iloc[0]["instituicao"] == "Prefeitura de Maceió - AL"
+
+
+class TestConsultarDuckDB:
+
+    def test_consulta_simples_retorna_dataframe(self, tmp_path):
+        df_original = pd.DataFrame(
+            {
+                "ano": [2020, 2020, 2021],
+                "capital": ["Maceió", "Salvador", "Maceió"],
+                "valor": [100.0, 200.0, 150.0],
+            }
+        )
+        caminho = tmp_path / "teste.parquet"
+        df_original.to_parquet(caminho)
+
+        resultado = consultar_duckdb(
+            "SELECT * FROM finbra WHERE ano = 2020 ORDER BY capital", caminho
+        )
+
+        assert len(resultado) == 2
+        assert list(resultado["capital"]) == ["Maceió", "Salvador"]
+
+    def test_consulta_com_agregacao(self, tmp_path):
+        df_original = pd.DataFrame(
+            {
+                "ano": [2020, 2020],
+                "capital": ["Maceió", "Maceió"],
+                "valor": [100.0, 50.0],
+            }
+        )
+        caminho = tmp_path / "teste.parquet"
+        df_original.to_parquet(caminho)
+
+        resultado = consultar_duckdb(
+            "SELECT capital, SUM(valor) AS total FROM finbra GROUP BY capital", caminho
+        )
+
+        assert resultado.iloc[0]["total"] == pytest.approx(150.0)
+
+    def test_retorna_dataframe_vazio_quando_nada_bate(self, tmp_path):
+        df_original = pd.DataFrame({"ano": [2020], "valor": [100.0]})
+        caminho = tmp_path / "teste.parquet"
+        df_original.to_parquet(caminho)
+
+        resultado = consultar_duckdb("SELECT * FROM finbra WHERE ano = 1999", caminho)
+
+        assert resultado.empty
